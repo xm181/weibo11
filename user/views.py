@@ -1,11 +1,15 @@
 import datetime
+from sqlite3 import IntegrityError
 
 from flask import Blueprint
+from flask import redirect
 from flask import request
 from flask import render_template
 
+from libs.orm import db
 from user.models import User
 from libs.utils import make_password
+from libs.utils import save_avatar
 
 user_bp = Blueprint(
 	'user',
@@ -32,6 +36,22 @@ def register():
 
 		user = User(nickname=nickname, password=make_password(password1),
 		            gender=gender, birthday=birthday, city=city, bio=bio, created=now)
+
+		# 保存头像
+		avatar_file = request.files.get('avatar')
+		if avatar_file:
+			user.avatar = save_avatar(avatar_file)
+
+		try:
+			# 保存到数据库
+			db.session.add(user)
+			db.session.commit()
+			return redirect('/user/login')
+		except IntegrityError:
+			db.session.rollback()
+			return render_template('register.html', err='您的昵称已被占用')
+	else:
+		return render_template('register.html')
 
 @user_bp.route('/login')
 def login():
