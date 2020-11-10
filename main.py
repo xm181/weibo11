@@ -1,13 +1,18 @@
 #!/user/bin/env python
 from flask import Flask
+from flask import redirect
 from flask_script import Manager
-from flask_migrate import Migrate,MigrateCommand
+from flask_migrate import Migrate, MigrateCommand
 
 from libs.orm import db
 from user.views import user_bp
+# from weibo.views import weibo_bp
+# from user.models import User
+# from weibo.models import Weibo
 
 #初始化app
 app = Flask(__name__)
+app.debug = True
 
 #设置一个secret_key,用来加密
 app.secret_key = r'dsfhsj23oo8r0wefoiln/kj23490uhsdlf'
@@ -28,7 +33,8 @@ app.register_blueprint(user_bp)
 
 @app.route('/')
 def home():
-	return 'hello world'
+	return redirect('/weibo/index')
 
 if __name__ == '__main__':
+
 	manager.run()

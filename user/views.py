@@ -1,15 +1,21 @@
 import datetime
-from sqlite3 import IntegrityError
 
 from flask import Blueprint
-from flask import redirect
 from flask import request
+from flask import redirect
+from flask import session
+from flask import abort
 from flask import render_template
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 from libs.orm import db
-from user.models import User
 from libs.utils import make_password
+from libs.utils import check_password
 from libs.utils import save_avatar
+from libs.utils import login_required
+from user.models import User
+# from user.models import Follow
 
 user_bp = Blueprint(
 	'user',
@@ -19,23 +25,57 @@ user_bp = Blueprint(
 )
 
 
-@user_bp.route('/register')
+@user_bp.route('/register', methods=('POST', 'GET'))
+# def register():
+# 	if request.method == 'POST':
+# 		nickname = request.form.get('nickname', '').strip()
+# 		password1 = request.form.get('password1', '').strip()
+# 		password2 = request.form.get('password2', '').strip()
+# 		gender = request.form.get('gender', 'unknow')
+# 		birthday = request.form.get('birthday')
+# 		city = request.form.get('city', '中国')
+# 		bio = request.form.get('bio')
+# 		now = datetime.datetime.now()  # 注册时间
+
 def register():
 	if request.method == 'POST':
-		nickname = request.form.get('nickname', '').strip()
-		password1 = request.form.get('password1', '').strip()
-		password2 = request.form.get('password2', '').strip()
-		gender = request.form.get('gender', '').strip()
-		birthday = request.form.get('birthday', '').strip()
-		city = request.form.get('city', '').strip()
-		bio = request.form.get('bio', '').strip()
-		now = datetime.datetime.now()  # 注册时间
+		nickname = request.form.get('nickname','').strip()
+		password1 = request.form.get('password1','').strip()
+		password2 = request.form.get('password2','').strip()
+		gender = request.form.get('gender','').strip()
+		birthday = request.form.get('birthday','').strip()
+		city = request.form.get('city','').strip()
+		bio = request.form.get('bio','').strip()
+		now = datetime.datetime.now()
+
+		data_list = [
+			('nickname',nickname),
+			('password',password1),
+			('gender',gender),
+			('birthday',birthday),
+			('city',city),
+			('bio',bio),
+			('created',now)
+		]
+
+
+		data_dict = dict()
+
+		for item in data_list:
+			if item[1] != '':
+				data_dict[item[0]] = item[1]
+
+		print(data_dict)
+
 
 		if not password1 or password1 != password2:
 			return render_template('register.html', err='密码不符合要求')
 
-		user = User(nickname=nickname, password=make_password(password1),
-		            gender=gender, birthday=birthday, city=city, bio=bio, created=now)
+		# user = User(nickname=nickname, password=make_password(password1),
+		#             gender=gender, birthday=birthday, city=city, bio=bio, created=now)
+		user = User(**data_dict)
+
+
 
 		# 保存头像
 		avatar_file = request.files.get('avatar')
@@ -53,15 +93,36 @@ def register():
 	else:
 		return render_template('register.html')
 
-@user_bp.route('/login')
+@user_bp.route('/login', methods=('POST', 'GET'))
 def login():
-	pass
+	if request.method == 'POST':
+		nickname = request.form.get('nickname', '').strip()
+		password = request.form.get('password', '').strip()
+
+		# 获取用户
+		try:
+			user = User.query.filter_by(nickname=nickname).one()
+		except NoResultFound:
+			return render_template('login.html', err='该用户不存在')
+
+		# 检查密码
+		if check_password(password, user.password):
+			# 在 Session 中记录用户的登录状态
+			session['uid'] = user.id
+			session['nickname'] = user.nickname
+			return redirect('/user/info')
+		else:
+			return render_template('login.html', err='密码错误')
+	else:
+		return render_template('login.html')
+
 
 @user_bp.route('/logout')
 def logout():
-	pass
+	return redirect('/')
 
 @user_bp.route('/info')
 def info():
-	pass
-
+	uid = session['uid']
+	user = User.query.get(uid)
+	return render_template('info.html',user=user)
