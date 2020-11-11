@@ -68,8 +68,9 @@ def login_required(view_func):
         if not uid:
             return redirect('/user/login')
         else:
-            return view_func(*args, **kwargs)
+            return view_func(*args,**kwargs)
     return check_session
+
 
 
 def random_zh_str(length):

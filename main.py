@@ -6,6 +6,7 @@ from flask_migrate import Migrate, MigrateCommand
 
 from libs.orm import db
 from user.views import user_bp
+from weibo.views import weibo_bp
 # from weibo.views import weibo_bp
 # from user.models import User
 # from weibo.models import Weibo
@@ -30,6 +31,7 @@ manager.add_command('db', MigrateCommand)
 
 #注册蓝图
 app.register_blueprint(user_bp)
+app.register_blueprint(weibo_bp)
 
 @app.route('/')
 def home():

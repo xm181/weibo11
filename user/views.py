@@ -15,6 +15,7 @@ from libs.utils import check_password
 from libs.utils import save_avatar
 from libs.utils import login_required
 from user.models import User
+
 # from user.models import Follow
 
 user_bp = Blueprint(
@@ -26,56 +27,37 @@ user_bp = Blueprint(
 
 
 @user_bp.route('/register', methods=('POST', 'GET'))
-# def register():
-# 	if request.method == 'POST':
-# 		nickname = request.form.get('nickname', '').strip()
-# 		password1 = request.form.get('password1', '').strip()
-# 		password2 = request.form.get('password2', '').strip()
-# 		gender = request.form.get('gender', 'unknow')
-# 		birthday = request.form.get('birthday')
-# 		city = request.form.get('city', '中国')
-# 		bio = request.form.get('bio')
-# 		now = datetime.datetime.now()  # 注册时间
-
 def register():
 	if request.method == 'POST':
-		nickname = request.form.get('nickname','').strip()
-		password1 = request.form.get('password1','').strip()
-		password2 = request.form.get('password2','').strip()
-		gender = request.form.get('gender','').strip()
-		birthday = request.form.get('birthday','').strip()
-		city = request.form.get('city','').strip()
-		bio = request.form.get('bio','').strip()
+		nickname = request.form.get('nickname', '').strip()
+		password1 = request.form.get('password1', '').strip()
+		password2 = request.form.get('password2', '').strip()
+		gender = request.form.get('gender', '').strip()
+		birthday = request.form.get('birthday', '').strip()
+		city = request.form.get('city', '').strip()
+		bio = request.form.get('bio', '').strip()
 		now = datetime.datetime.now()
 
-		data_list = [
-			('nickname',nickname),
-			('password',password1),
-			('gender',gender),
-			('birthday',birthday),
-			('city',city),
-			('bio',bio),
-			('created',now)
-		]
 
+
+		if not password1 or password1 != password2:
+			return render_template('register.html', err='密码不符合要求')
+		data_list = [
+			('nickname', nickname),
+			('password', make_password(password1)),
+			('gender', gender),
+			('birthday', birthday),
+			('city', city),
+			('bio', bio),
+			('created', now)
+		]
 
 		data_dict = dict()
 
 		for item in data_list:
 			if item[1] != '':
 				data_dict[item[0]] = item[1]
-
-		print(data_dict)
-
-
-		if not password1 or password1 != password2:
-			return render_template('register.html', err='密码不符合要求')
-
-		# user = User(nickname=nickname, password=make_password(password1),
-		#             gender=gender, birthday=birthday, city=city, bio=bio, created=now)
 		user = User(**data_dict)
-
-
 
 		# 保存头像
 		avatar_file = request.files.get('avatar')
@@ -84,6 +66,7 @@ def register():
 
 		try:
 			# 保存到数据库
+
 			db.session.add(user)
 			db.session.commit()
 			return redirect('/user/login')
@@ -92,6 +75,7 @@ def register():
 			return render_template('register.html', err='您的昵称已被占用')
 	else:
 		return render_template('register.html')
+
 
 @user_bp.route('/login', methods=('POST', 'GET'))
 def login():
@@ -119,10 +103,14 @@ def login():
 
 @user_bp.route('/logout')
 def logout():
+	'''退出功能，clear是删除字典信息'''
+	session.clear()
 	return redirect('/')
 
+
 @user_bp.route('/info')
+@login_required
 def info():
 	uid = session['uid']
 	user = User.query.get(uid)
-	return render_template('info.html',user=user)
+	return render_template('info.html', user=user)
