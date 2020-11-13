@@ -62,6 +62,7 @@ def save_avatar(avatar_file):
 
 
 def login_required(view_func):
+    #使套装饰器的函数有了装饰器的内容，又不改变原函数内核和名字的方法
     @wraps(view_func)
     def check_session(*args, **kwargs):
         uid = session.get('uid')
