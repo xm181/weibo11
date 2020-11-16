@@ -43,12 +43,12 @@ class User(db.Model):
         return users
 #
 #
-# class Follow(db.Model):
-#     '''关注表'''
-#     __tablename__ = 'follow'
-#
-#     uid = db.Column(db.Integer, primary_key=True)
-#     fid = db.Column(db.Integer, primary_key=True)
+class Follow(db.Model):
+    '''关注表'''
+    __tablename__ = 'follow'
+
+    uid = db.Column(db.Integer, primary_key=True)
+    fid = db.Column(db.Integer, primary_key=True)
 
 
 

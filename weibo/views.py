@@ -11,10 +11,9 @@ from sqlalchemy.exc import IntegrityError
 
 from libs.orm import db
 from libs.utils import login_required
-from weibo.models import Weibo
-# from weibo.models import Comment
-# from weibo.models import Thumb
-# from user.models import Follow
+from user.models import Follow
+from weibo.models import Weibo, Comment, Thumb
+
 
 weibo_bp = Blueprint(
     'weibo',
@@ -73,21 +72,21 @@ def read_weibo():
     '''阅读微博'''
     wid = int(request.args.get('wid'))
     weibo = Weibo.query.get(wid)
-#
-#     # 获取当前微博所有的评论
-#     comments = Comment.query.filter_by(wid=wid).order_by(Comment.created.desc())
-#
-#     # 判断自己收否点过赞
-#     uid = session.get('uid')
-#     if uid:
-#         if Thumb.query.filter_by(uid=uid, wid=wid).count():
-#             is_liked = True
-#         else:
-#             is_liked = False
-#     else:
-#         is_liked = False
-#     return render_template('read.html', weibo=weibo, comments=comments, is_liked=is_liked)
-    return render_template('read.html', weibo=weibo)
+
+    # 获取当前微博所有的评论
+    comments = Comment.query.filter_by(wid=wid).order_by(Comment.created.desc())
+
+    # 判断自己收否点过赞
+    uid = session.get('uid')
+    if uid:
+        if Thumb.query.filter_by(uid=uid, wid=wid).count():
+            is_liked = True
+        else:
+            is_liked = False
+    else:
+        is_liked = False
+    return render_template('read.html', weibo=weibo, comments=comments, is_liked=is_liked)
+
 
 
 @weibo_bp.route('/edit', methods=("POST", "GET"))
@@ -139,94 +138,94 @@ def delete_weibo():
         abort(403)
 
 
-# @weibo_bp.route('/post_comment', methods=("POST",))
-# @login_required
-# def post_comment():
-#     '''发表评论'''
-#     wid = int(request.form.get('wid'))
-#     content = request.form.get('content')
-#     now = datetime.datetime.now()
-#
-#     # 创建 comment 对象
-#     comment = Comment(uid=session['uid'], wid=wid, content=content, created=now)
-#     db.session.add(comment)
-#     db.session.commit()
-#
-#     return redirect(f'/weibo/read?wid={wid}')
-#
-#
-# @weibo_bp.route('/reply', methods=("POST",))
-# @login_required
-# def reply():
-#     '''发表回复'''
-#     wid = int(request.form.get('wid'))
-#     cid = int(request.form.get('cid'))
-#     content = request.form.get('content')
-#     now = datetime.datetime.now()
-#
-#     # 创建 comment 对象
-#     comment = Comment(uid=session['uid'], wid=wid, cid=cid, content=content, created=now)
-#     db.session.add(comment)
-#     db.session.commit()
-#
-#     return redirect(f'/weibo/read?wid={wid}')
-#
-#
-# @weibo_bp.route('/delete_comment')
-# def delete_comment():
-#     cid = int(request.args.get('cid'))
-#     cmt = Comment.query.get(cid)
-#
-#     # 检查是否是在删除别人的评论
-#     if cmt.uid != session['uid']:
-#         abort(403)
-#
-#     # 修改数据
-#     cmt.content = '当前评论已被删除'
-#     db.session.commit()
-#
-#     return redirect('/')
-#
-#
-# @weibo_bp.route('/like')
-# @login_required
-# def like():
-#     '''点赞'''
-#     wid = int(request.args.get('wid'))
-#     uid = session['uid']
-#
-#     thumb = Thumb(uid=uid, wid=wid)
-#     try:
-#         # 提交点赞
-#         Weibo.query.filter_by(id=wid).update({'n_thumb': Weibo.n_thumb + 1})  # 点赞数量加一
-#         db.session.add(thumb)
-#         db.session.commit()
-#     except IntegrityError:
-#         db.session.rollback()
-#         # 取消点赞
-#         Weibo.query.filter_by(id=wid).update({'n_thumb': Weibo.n_thumb - 1})  # 点赞数量减一
-#         Thumb.query.filter_by(uid=uid, wid=wid).delete()
-#         db.session.commit()
-#
-#     return redirect(f'/weibo/read?wid={wid}')
-#
-#
-# @weibo_bp.route('/follow_weibo')
-# @login_required
-# def follow_weibo():
-#     '''查看自己关注的人的微博'''
-#     uid = session['uid']
-#
-#     # 找到自己关注的人 uid 列表
-#     # select fid from follow where uid = 1
-#     follows = Follow.query.filter_by(uid=uid).values('fid')
-#     fid_list = [fid for (fid,) in follows]
-#
-#     # 找到这些人最近发布的前 100 条微博
-#     # select * from weibo where uid in (
-#     #   select fid from follow where uid=1
-#     # ) order by created desc limit 100;
-#     wb_list = Weibo.query.filter(Weibo.uid.in_(fid_list)).order_by(Weibo.created.desc()).limit(100)
-#
-#     return render_template('follow_weibo.html', wb_list=wb_list)
-#
+@weibo_bp.route('/post_comment', methods=("POST",))
+@login_required
+def post_comment():
+    '''发表评论'''
+    wid = int(request.form.get('wid'))
+    content = request.form.get('content')
+    now = datetime.datetime.now()
+
+    # 创建 comment 对象
+    comment = Comment(uid=session['uid'], wid=wid, content=content, created=now)
+    db.session.add(comment)
+    db.session.commit()
+
+    return redirect(f'/weibo/read?wid={wid}')
+
+
+@weibo_bp.route('/reply', methods=("POST",))
+@login_required
+def reply():
+    '''发表回复'''
+    wid = int(request.form.get('wid'))
+    cid = int(request.form.get('cid'))
+    content = request.form.get('content')
+    now = datetime.datetime.now()
+
+    # 创建 comment 对象
+    comment = Comment(uid=session['uid'], wid=wid, cid=cid, content=content, created=now)
+    db.session.add(comment)
+    db.session.commit()
+
+    return redirect(f'/weibo/read?wid={wid}')
+
+
+@weibo_bp.route('/delete_comment')
+def delete_comment():
+    cid = int(request.args.get('cid'))
+    cmt = Comment.query.get(cid)
+
+    # 检查是否是在删除别人的评论
+    if cmt.uid != session['uid']:
+        abort(403)
+
+    # 修改数据
+    cmt.content = '当前评论已被删除'
+    db.session.commit()
+
+    return redirect('/')
+
+
+@weibo_bp.route('/like')
+@login_required
+def like():
+    '''点赞'''
+    wid = int(request.args.get('wid'))
+    uid = session['uid']
+
+    thumb = Thumb(uid=uid, wid=wid)
+    try:
+        # 提交点赞
+        Weibo.query.filter_by(id=wid).update({'n_thumb': Weibo.n_thumb + 1})  # 点赞数量加一
+        db.session.add(thumb)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        # 取消点赞
+        Weibo.query.filter_by(id=wid).update({'n_thumb': Weibo.n_thumb - 1})  # 点赞数量减一
+        Thumb.query.filter_by(uid=uid, wid=wid).delete()
+        db.session.commit()
+
+    return redirect(f'/weibo/read?wid={wid}')
+
+
+@weibo_bp.route('/follow_weibo')
+@login_required
+def follow_weibo():
+    '''查看自己关注的人的微博'''
+    uid = session['uid']
+
+    # 找到自己关注的人 uid 列表
+    # select fid from follow where uid = 1
+    follows = Follow.query.filter_by(uid=uid).values('fid')
+    fid_list = [fid for (fid,) in follows]
+
+    # 找到这些人最近发布的前 100 条微博
+    # select * from weibo where uid in (
+    #   select fid from follow where uid=1
+    # ) order by created desc limit 100;
+    wb_list = Weibo.query.filter(Weibo.uid.in_(fid_list)).order_by(Weibo.created.desc()).limit(100)
+
+    return render_template('follow_weibo.html', wb_list=wb_list)
+

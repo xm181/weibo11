@@ -38,34 +38,34 @@ class Weibo(db.Model):
 
 
 
-# class Comment(db.Model):
-#     '''评论表'''
-#     __tablename__ = 'comment'
+class Comment(db.Model):
+    '''评论表'''
+    __tablename__ = 'comment'
+
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, nullable=False, index=True)
+    wid = db.Column(db.Integer, nullable=False, index=True)
+    cid = db.Column(db.Integer, nullable=False, index=True, default=0)
+    content = db.Column(db.Text, nullable=False)
+    created = db.Column(db.DateTime, nullable=False)
+
+    @property
+    def author(self):
+        '''获取当前评论的作者'''
+        return User.query.get(self.uid)
+
+    @property
+    def upper(self):
+        '''上一级评论'''
+        if self.cid == 0:
+            return None
+        else:
+            return Comment.query.get(self.cid)
 #
-#     id = db.Column(db.Integer, primary_key=True)
-#     uid = db.Column(db.Integer, nullable=False, index=True)
-#     wid = db.Column(db.Integer, nullable=False, index=True)
-#     cid = db.Column(db.Integer, nullable=False, index=True, default=0)
-#     content = db.Column(db.Text, nullable=False)
-#     created = db.Column(db.DateTime, nullable=False)
-#
-#     @property
-#     def author(self):
-# 	    '''获取当前评论的作者'''
-# 	    return User.query.get(self.uid)
-#
-#     @property
-#     def upper(self):
-# 	    '''上一级评论'''
-# 	    if self.cid == 0:
-# 		    return None
-# 	    else:
-# 		    return Comment.query.get(self.cid)
-#
-# class Thumb(db.Model):
-#     '''点赞表'''
-#
-# __tablename__ = 'thumb'
-#
-# uid = db.Column(db.Integer, primary_key=True)
-# wid = db.Column(db.Integer, primary_key=True)
+class Thumb(db.Model):
+    '''点赞表'''
+
+__tablename__ = 'thumb'
+
+uid = db.Column(db.Integer, primary_key=True)
+wid = db.Column(db.Integer, primary_key=True)
